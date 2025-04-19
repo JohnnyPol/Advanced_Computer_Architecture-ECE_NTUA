@@ -1,0 +1,12 @@
+Total Instructions: 403338854
+
+RAS: (Correct - Incorrect)
+
+Branch Predictors: (Name - Correct - Incorrect)
+  Nbit-16K-2: 44215813 4432057
+  FSM-Row2: 44122337 4525533
+  FSM-Row3: 44160208 4487662
+  FSM-Row4: 44098312 4549558
+  FSM-Row5: 43974287 4673583
+
+BTB Predictors: (Name - Correct - Incorrect - TargetCorrect)
