@@ -168,27 +168,46 @@ VOID Fini(int code, VOID *v)
 
 /* ===================================================================== */
 
-// N-bit predictors
-/*
-for (int i=1; i <= 4; i++) {
-    NbitPredictor *nbitPred = new NbitPredictor(14, i); // 2^14 = 16k (16384)
-    branch_predictors.push_back(nbitPred);
-}
-*/
 VOID InitPredictors()
 {
+    /* Question 5.3 (i)
+    // N-bit predictors
+
+    for (int i=1; i <= 4; i++) {
+        NbitPredictor *nbitPred = new NbitPredictor(14, i); // 2^14 = 16k (16384)
+        branch_predictors.push_back(nbitPred);
+    }
+
+    */
+    /* Question 5.3 (ii)
     // Row 1
-    NbitPredictor *nbitPred = new NbitPredictor(14, 2); // 2-bit saturating counter 
+    NbitPredictor *nbitPred = new NbitPredictor(15, 2); // 2-bit saturating counter 
     branch_predictors.push_back(nbitPred);
     for (int row = 2; row <= 5; row++)
     {
         branch_predictors.push_back(new FSMPredictor(row));
     }
-}
+    */
+    /* Question 5.3 (iii) 
+    */
+    // — N-bit predictors with constant hardware 32K bits —
+    // N=1bit → index_bits=15
+    branch_predictors.push_back(new NbitPredictor(15, 1));
+    // N=2bit → index_bits=14
+    branch_predictors.push_back(new NbitPredictor(14, 2));
+    // N=4bit → index_bits=13
+    branch_predictors.push_back(new NbitPredictor(13, 4));
 
-// Pentium-M predictor
-// PentiumMBranchPredictor *pentiumPredictor = new PentiumMBranchPredictor();
-// branch_predictors.push_back(pentiumPredictor);
+    // — For N=2 also the alternative FSMs (rows 2–5) —
+    for (unsigned r = 2; r <= 5; ++r) {
+        branch_predictors.push_back(new FSMPredictor(r));
+    }
+
+    /* // Pentium-M predictor
+    PentiumMBranchPredictor *pentiumPredictor = new PentiumMBranchPredictor();
+    branch_predictors.push_back(pentiumPredictor);
+    */
+}
 
 VOID InitRas()
 {

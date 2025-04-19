@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ## For nbit predictors
-predictors_to_plot = [ "  Nbit-16K-" , "  FSM" ]
+predictors_to_plot = [ "  Nbit" , "  FSM" ]
 
 x_Axis = []
 mpki_Axis = []
