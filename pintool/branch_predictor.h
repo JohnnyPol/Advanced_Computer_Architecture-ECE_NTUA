@@ -100,8 +100,13 @@ class FSMPredictor : public BranchPredictor
 public:
     FSMPredictor(unsigned row_) : row(row_), index_bits(14), cntr_bits(2)
     {
+        if (row < 2 || row > 5)
+        {
+            std::cerr << "Error: FSMPredictor row must be between 2 and 5." << std::endl;
+            exit(1);
+        }
         table_entries = 1 << index_bits;
-        TABLE = new unsigned long long[table_entries];
+        TABLE = new uint8_t[table_entries];
         memset(TABLE, 0, table_entries * sizeof(*TABLE));
     }
 
@@ -113,190 +118,53 @@ public:
     bool predict(ADDRINT ip, ADDRINT target) override
     {
         unsigned int ip_table_index = ip % table_entries;
-        unsigned long long ip_table_value = TABLE[ip_table_index];
-        unsigned long long prediction = ip_table_value >> (cntr_bits - 1);
+        uint8_t ip_table_value = TABLE[ip_table_index];
+        uint8_t prediction = ip_table_value >> (cntr_bits - 1);
         return (prediction != 0);
     }
 
     void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) override
     {
         unsigned int idx = ip % table_entries;
-        unsigned long long state = TABLE[idx];
+        uint8_t state = TABLE[idx];
+        
+        unsigned int row_idx = row - 2;
+        unsigned int outcome_idx = actual ? 1 : 0;
+        uint8_t next_state = transitions[row_idx][outcome_idx][state];
+        
+        // Update the state in the table
+        TABLE[idx] = next_state;
 
-        switch (row)
-        {
-        case 2:
-            if (actual)
-            { // Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 1;
-                    break; // 0->1
-                case 1:
-                    TABLE[idx] = 2;
-                    break; // 1->2
-                case 2:
-                    TABLE[idx] = 3;
-                    break; // 2->3
-                case 3:
-                    TABLE[idx] = 3;
-                    break; // 3->3
-                }
-            }
-            else
-            { // Not Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 0;
-                    break; // 0->0
-                case 1:
-                    TABLE[idx] = 0;
-                    break; // 1->0
-                case 2:
-                    TABLE[idx] = 0;
-                    break; // 2->0
-                case 3:
-                    TABLE[idx] = 2;
-                    break; // 3->2
-                }
-            }
-            break;
-        case 3:
-            if (actual)
-            { // Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 1;
-                    break; // 0->1
-                case 1:
-                    TABLE[idx] = 3;
-                    break; // 1->3
-                case 2:
-                    TABLE[idx] = 3;
-                    break; // 2->3
-                case 3:
-                    TABLE[idx] = 3;
-                    break; // 3->3
-                }
-            }
-            else
-            { // Not Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 0;
-                    break; // 0->0
-                case 1:
-                    TABLE[idx] = 0;
-                    break; // 1->0
-                case 2:
-                    TABLE[idx] = 1;
-                    break; // 2->1
-                case 3:
-                    TABLE[idx] = 2;
-                    break; // 3->2
-                }
-            }
-            break;
-        case 4:
-            if (actual)
-            { // Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 1;
-                    break; // 1→2
-                case 1:
-                    TABLE[idx] = 3;
-                    break; // 1→3
-                case 2:
-                    TABLE[idx] = 3;
-                    break; // 2→3
-                case 3:
-                    TABLE[idx] = 3;
-                    break; // 3->3
-                }
-            }
-            else
-            { // Not Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 0;
-                    break; // 1→1
-                case 1:
-                    TABLE[idx] = 0;
-                    break; // 2→1
-                case 2:
-                    TABLE[idx] = 0;
-                    break; // 3→1
-                case 3:
-                    TABLE[idx] = 2;
-                    break; // 4→3
-                }
-            }
-            break;
-        case 5:
-            if (actual)
-            { // Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 1;
-                    break; // 0->1
-                case 1:
-                    TABLE[idx] = 3;
-                    break; // 1->3
-                case 2:
-                    TABLE[idx] = 3;
-                    break; // 2->3
-                case 3:
-                    TABLE[idx] = 2;
-                    break; // 3->2
-                }
-            }
-            else
-            { // Not Taken
-                switch (state)
-                {
-                case 0:
-                    TABLE[idx] = 0;
-                    break; // 0->0
-                case 1:
-                    TABLE[idx] = 0;
-                    break; // 1->0
-                case 2:
-                    TABLE[idx] = 1;
-                    break; // 2->1
-                case 3:
-                    TABLE[idx] = 2;
-                    break; // 3->2
-                }
-            }
-            break;
-        default:
-            std::cerr << "Invalid row number" << std::endl;
-            break;
-        }
+        // Update the counters
         updateCounters(predicted, actual);
     }
 
     std::string getName() override
     {
         std::ostringstream stream;
-        stream << "FSM-Row" << row;
+        stream << "FSM-Row-" << row;
         return stream.str();
     }
 
 private:
+    static const uint8_t transitions_table[4][2][4] = {
+        // Row 2 (row_idx=0)
+        {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+         {1, 2, 3, 3}}, // Taken transitions     (state 0->1, 1->2, 2->3, 3->3)
+        // Row 3 (row_idx=1)
+        {{0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+         {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+        // Row 4 (row_idx=2)
+        {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+         {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+        // Row 5 (row_idx=3)
+        {{0, 0, 1, 2}, // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+         {1, 3, 3, 2}} // Taken transitions     (state 0->1, 1->3, 2->3, 3->2)
+    };
     unsigned int row;
     unsigned int table_entries;
-    unsigned int index_bits, cntr_bits;
-    /* Make this unsigned long long so as to support big numbers of cntr_bits. */
-    unsigned long long *TABLE;
+    const unsigned index_bits, cntr_bits;
+    uint8_t *TABLE;
 };
 
 // Fill in the BTB implementation ...
