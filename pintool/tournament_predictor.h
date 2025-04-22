@@ -49,7 +49,7 @@ public:
 		memset(TABLE, 0, table_entries * sizeof(*TABLE));
 	}
 
-	~TournamentHybridPredictor() {delete[] TABLE;}
+	~TournamentHybridPredictor() {delete[] TABLE; delete predictor1; delete predictor2;}
 
 	virtual bool predict(ADDRINT ip, ADDRINT target) {
         	unsigned int ip_table_index = ip % table_entries;
