@@ -15,10 +15,10 @@ inputBase="/home/john/Adv_Comp_Arch/advcomparch-ex1-helpcode/spec_execs_ref_inpu
 # Loop over every subfolder in the input base directory.
 # By uncommenting the respective lines below you can run either only one benchmark or all benchmarks inside a directory
 # Uncomment following line (and "done" at the end of loop) for looping
-for folder in "$inputBase"/*; do
+#for folder in "$inputBase"/*; do
 
 # Uncomment following line to check only 403.gcc (also comment the "done" at the end of the loop). Give the benchmark folder name as the first argument when running
-#folder="$inputBase/$1" # $1 is the first argument
+folder="$inputBase/$1" # $1 is the first argument
     if [ -d "$folder" ]; then
         BENCH=$(basename "$folder")
         (
@@ -52,7 +52,7 @@ for folder in "$inputBase"/*; do
             # { time /bin/bash -c "$pin_cmd" ; } &> "$outDir/${BENCH}_timing.log"
         ) &
     fi
-done
+#done
 
 wait
 echo "Train Predictors. All benchmarks done."
