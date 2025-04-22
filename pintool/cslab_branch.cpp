@@ -207,7 +207,7 @@ VOID InitPredictors()
 
     /* Question 5.5 */
 
-    /* Question 5.6 */
+    /* Question 5.6 
     // Static Always Taken Predictor
     branch_predictors.push_back(new StaticAlwaysTakenPredictor());
 
@@ -233,7 +233,7 @@ VOID InitPredictors()
 
     // Alpha 21264 Predictor
     branch_predictors.push_back(new Alpha21264Predictor());
-
+    */
 }
 
 VOID InitRas()
@@ -259,7 +259,7 @@ int main(int argc, char *argv[])
 
     // Initialize predictors and RAS vector
     InitPredictors();
-    // InitRas();
+    InitRas();
 
     // Instrument function calls in order to catch __parsec_roi_{begin,end}
     INS_AddInstrumentFunction(Instruction, 0);

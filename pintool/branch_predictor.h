@@ -147,24 +147,25 @@ public:
     }
 
 private:
-    static const uint8_t transitions_table[4][2][4] = {
-        // Row 2 (row_idx=0)
-        {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
-         {1, 2, 3, 3}}, // Taken transitions     (state 0->1, 1->2, 2->3, 3->3)
-        // Row 3 (row_idx=1)
-        {{0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
-         {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
-        // Row 4 (row_idx=2)
-        {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
-         {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
-        // Row 5 (row_idx=3)
-        {{0, 0, 1, 2}, // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
-         {1, 3, 3, 2}} // Taken transitions     (state 0->1, 1->3, 2->3, 3->2)
-    };
+    static const uint8_t transitions[4][2][4];
     unsigned int row;
     unsigned int table_entries;
     const unsigned index_bits, cntr_bits;
     uint8_t *TABLE;
+};
+const uint8_t FSMPredictor::transitions[4][2][4] = {
+    // Row 2 (row_idx=0) - [outcome][state]
+    { {0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+      {1, 2, 3, 3} },// Taken transitions     (state 0->1, 1->2, 2->3, 3->3)
+    // Row 3 (row_idx=1) - [outcome][state]
+    { {0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+      {1, 3, 3, 3} },// Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+    // Row 4 (row_idx=2) - [outcome][state]
+    { {0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+      {1, 3, 3, 3} },// Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+    // Row 5 (row_idx=3) - [outcome][state]
+    { {0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+      {1, 3, 3, 2} } // Taken transitions     (state 0->1, 1->3, 2->3, 3->2)
 };
 
 // Fill in the BTB implementation ...
@@ -209,5 +210,6 @@ public:
 private:
     int table_lines, table_assoc;
 };
+
 
 #endif
