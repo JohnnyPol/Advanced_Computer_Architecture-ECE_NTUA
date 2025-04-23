@@ -188,7 +188,7 @@ VOID InitPredictors()
         branch_predictors.push_back(new FSMPredictor(row));
     }
     */
-    /* Question 5.3 (iii)
+    /* Question 5.3 (iii)*/
 
     // — N-bit predictors with constant hardware 32K bits —
     // N=1bit → index_bits=15
@@ -202,12 +202,12 @@ VOID InitPredictors()
     for (unsigned r = 2; r <= 5; ++r) {
         branch_predictors.push_back(new FSMPredictor(r));
     }
-    */
+    
     /* Question 5.4 */
 
     /* Question 5.5 */
 
-    /* Question 5.6 */
+    /* Question 5.6 
     // Static Always Taken Predictor
     branch_predictors.push_back(new StaticAlwaysTakenPredictor());
 
@@ -233,7 +233,7 @@ VOID InitPredictors()
 
     // Alpha 21264 Predictor
     branch_predictors.push_back(new Alpha21264Predictor());
-    
+    */
 }
 
 VOID InitRas()

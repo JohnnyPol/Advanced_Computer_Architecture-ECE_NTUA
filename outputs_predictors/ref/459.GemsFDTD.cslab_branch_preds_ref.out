@@ -1,13 +1,14 @@
-Total Instructions: 1475062506926
+Total Instructions: 1475062506638
 
 RAS: (Correct - Incorrect)
-RAS (4 entries): 1459126830 2182626
-RAS (8 entries): 1461309338 118
-RAS (16 entries): 1461309456 0
-RAS (32 entries): 1461309456 0
-RAS (48 entries): 1461309456 0
-RAS (64 entries): 1461309456 0
 
 Branch Predictors: (Name - Correct - Incorrect)
+  Nbit-32K-1: 40846237834 886880025
+  Nbit-16K-2: 41280377950 452739909
+  Nbit-8K-4: 41282862631 450255228
+  FSM-Row-2: 41254751518 478366341
+  FSM-Row-3: 41279448736 453669123
+  FSM-Row-4: 41279229217 453888642
+  FSM-Row-5: 41144751235 588366624
 
 BTB Predictors: (Name - Correct - Incorrect - TargetCorrect)
