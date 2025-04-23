@@ -58,7 +58,7 @@ public:
 
 		if (prediction_bit)
 			return (predictor2->predict(ip, target));
-	        return (predictor1->predict(ip, target));
+	        return (predictor1->predict(ip, target)); // TODO: check if this is correct
 	}
 
 	virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) {

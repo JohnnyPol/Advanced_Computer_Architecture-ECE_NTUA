@@ -10,7 +10,6 @@
 class GlobalHistoryPredictor : public BranchPredictor
 {
 private:
-    // Παράμετροι του Predictor
     const unsigned int pht_entries;    // Αριθμός εγγραφών PHT (Z)
     const unsigned int counter_length; // Μήκος μετρητή PHT (X bits)
     const unsigned int bhr_length;     // Μήκος Global BHR (N bits)
@@ -25,6 +24,7 @@ private:
     const uint8_t counter_max;          // Μέγιστη τιμή μετρητή (2^X - 1)
     const uint8_t bhr_mask;             // Μάσκα για τον BHR (2^N - 1)
     const uint8_t prediction_threshold; // Όριο για πρόβλεψη Taken (2^(X-1))
+    const unsigned int pht_index_mask;  // Μάσκα για τον δείκτη PHT (Z-1)
 
 public:
     // Constructor
@@ -35,25 +35,31 @@ public:
                                                                                                                    BHR(0), // Αρχικοποίηση BHR σε 0
                                                                                                                    counter_max((1 << counter_length_X) - 1),
                                                                                                                    bhr_mask((1 << bhr_length_N) - 1),
-                                                                                                                   prediction_threshold(1 << (counter_length_X - 1))
+                                                                                                                   prediction_threshold(1 << (counter_length_X - 1)),
+                                                                                                                   pht_index_mask(pht_entries_Z - 1) 
     {
+        // Έλεγχος αν pht_entries είναι δύναμη του 2 (σημαντικό για τη μάσκα)
+        if ((pht_entries & (pht_entries - 1)) != 0)
+        {
+            std::cerr << "Warning: GlobalHistoryPredictor PHT size (" << pht_entries
+                      << ") is not a power of 2. Indexing might be suboptimal." << std::endl;
+            // Η μάσκα pht_index_mask δεν θα είναι σωστή σε αυτή την περίπτωση
+        }
         // Αρχικοποίηση PHT (μέγεθος Z)
         // Αρχική κατάσταση: Weakly Not Taken (η κατάσταση ακριβώς κάτω από το όριο πρόβλεψης)
         uint8_t initial_pht_state = (prediction_threshold > 0) ? prediction_threshold - 1 : 0;
         PHT.assign(pht_entries, initial_pht_state);
     }
 
-    // Destructor (δεν χρειάζεται ειδική υλοποίηση λόγω std::vector)
     ~GlobalHistoryPredictor() override = default;
 
     // Μέθοδος πρόβλεψης
     bool predict(ADDRINT ip, ADDRINT target) override
     {
-        // 1. Χρησιμοποίησε την τρέχουσα τιμή του BHR ως δείκτη PHT
-        unsigned int pht_index = BHR;
-
-        // Προαιρετικός έλεγχος ορίων (αν και με N=2,4 δεν θα ξεπεράσουμε τα Z=8K/16K)
-        // if (pht_index >= pht_entries) { /* handle error or default */ pht_index = 0; }
+        // 1. Υπολόγισε τον δείκτη PHT συνδυάζοντας PC (ip) και BHR (Gshare)
+        //    Χρησιμοποιούμε τα k = log2(Z) χαμηλότερα bits του ip XOR BHR
+        //    Η μάσκα (Z-1) διασφαλίζει ότι ο δείκτης είναι στα όρια 0 έως Z-1.
+        unsigned int pht_index = (ip ^ BHR) & pht_index_mask;
 
         // 2. Διάβασε τον X-bit μετρητή από τον PHT
         uint8_t counter_state = PHT[pht_index];
@@ -66,11 +72,8 @@ public:
     // Μέθοδος ενημέρωσης
     void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) override
     {
-        // 1. Βρες τον δείκτη PHT χρησιμοποιώντας το BHR ΠΡΙΝ την ενημέρωση
-        unsigned int pht_index = BHR;
-
-        // Προαιρετικός έλεγχος ορίων
-        // if (pht_index >= pht_entries) { /* handle error or default */ pht_index = 0; }
+        // 1. Βρες τον δείκτη PHT χρησιμοποιώντας το ip και το BHR ΠΡΙΝ την ενημέρωση
+        unsigned int pht_index = (ip ^ BHR) & pht_index_mask;
 
         // 2. Ενημέρωσε τον X-bit μετρητή στον PHT
         uint8_t old_counter_state = PHT[pht_index];

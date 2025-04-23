@@ -188,7 +188,7 @@ VOID InitPredictors()
         branch_predictors.push_back(new FSMPredictor(row));
     }
     */
-    /* Question 5.3 (iii)*/
+    /* Question 5.3 (iii)
 
     // — N-bit predictors with constant hardware 32K bits —
     // N=1bit → index_bits=15
@@ -202,27 +202,30 @@ VOID InitPredictors()
     for (unsigned r = 2; r <= 5; ++r) {
         branch_predictors.push_back(new FSMPredictor(r));
     }
-    
+    */
     /* Question 5.4 */
 
     /* Question 5.5 */
 
-    /* Question 5.6 
-    // Static Always Taken Predictor
+    /* Question 5.6 */
+    // 1. Static Always Taken Predictor
     branch_predictors.push_back(new StaticAlwaysTakenPredictor());
+    
+    // 2. Static BTFNT (BackwardTaken-ForwardNotTaken) Predictor
+    branch_predictors.push_back(new StaticBTFNTPredictor());
 
-    // N-Bit Predictor (FSM from Row 3)
+    // 3. N-Bit Predictor (FSM from Row 3)
     branch_predictors.push_back(new FSMPredictor(3)); // Row 3
 
-    // Pentium M Predictor
+    // 4. Pentium M Predictor
     branch_predictors.push_back(new PentiumMBranchPredictor()); 
 
-    // Local History Predictors (32K budget)
+    // 5-7. Local History Predictors (32K budget)
     branch_predictors.push_back(new LocalHistoryPredictor(2048, 8)); // X=2048, Z=8
     branch_predictors.push_back(new LocalHistoryPredictor(4096, 4)); // X=4096, Z=4
     branch_predictors.push_back(new LocalHistoryPredictor(8192, 2)); // X=8192, Z=2
 
-    // Global History Predictors (32K budget)
+    // 8-11. Global History Predictors (32K budget)
     // X=2 => Z=16384
     branch_predictors.push_back(new GlobalHistoryPredictor(16384, 2, 2)); // Z=16K, X=2, N=2
     branch_predictors.push_back(new GlobalHistoryPredictor(16384, 2, 4)); // Z=16K, X=2, N=4
@@ -231,9 +234,11 @@ VOID InitPredictors()
     branch_predictors.push_back(new GlobalHistoryPredictor(8192, 4, 2)); // Z=8K,  X=4, N=2
     branch_predictors.push_back(new GlobalHistoryPredictor(8192, 4, 4)); // Z=8K,  X=4, N=4
 
-    // Alpha 21264 Predictor
+    // 12. Alpha 21264 Predictor
     branch_predictors.push_back(new Alpha21264Predictor());
-    */
+    
+    // 13-16. Tournament Hybrid Predictors
+
 }
 
 VOID InitRas()
