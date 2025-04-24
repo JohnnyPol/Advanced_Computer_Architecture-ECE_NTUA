@@ -98,7 +98,7 @@ private:
 class FSMPredictor : public BranchPredictor
 {
 public:
-    FSMPredictor(unsigned row_) : row(row_), index_bits(14), cntr_bits(2)
+    FSMPredictor(unsigned row_) : BranchPredictor(), row(row_), index_bits(14), cntr_bits(2)
     {
         if (row < 2 || row > 5)
         {
@@ -127,11 +127,11 @@ public:
     {
         unsigned int idx = ip % table_entries;
         uint8_t state = TABLE[idx];
-        
+
         unsigned int row_idx = row - 2;
         unsigned int outcome_idx = actual ? 1 : 0;
         uint8_t next_state = transitions[row_idx][outcome_idx][state];
-        
+
         // Update the state in the table
         TABLE[idx] = next_state;
 
@@ -155,130 +155,129 @@ private:
 };
 const uint8_t FSMPredictor::transitions[4][2][4] = {
     // Row 2 (row_idx=0) - [outcome][state]
-    { {0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
-      {1, 2, 3, 3} },// Taken transitions     (state 0->1, 1->2, 2->3, 3->3)
+    {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+     {1, 2, 3, 3}}, // Taken transitions     (state 0->1, 1->2, 2->3, 3->3)
     // Row 3 (row_idx=1) - [outcome][state]
-    { {0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
-      {1, 3, 3, 3} },// Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+    {{0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+     {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
     // Row 4 (row_idx=2) - [outcome][state]
-    { {0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
-      {1, 3, 3, 3} },// Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
+    {{0, 0, 0, 2},  // Not Taken transitions (state 0->0, 1->0, 2->0, 3->2)
+     {1, 3, 3, 3}}, // Taken transitions     (state 0->1, 1->3, 2->3, 3->3)
     // Row 5 (row_idx=3) - [outcome][state]
-    { {0, 0, 1, 2},  // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
-      {1, 3, 3, 2} } // Taken transitions     (state 0->1, 1->3, 2->3, 3->2)
+    {{0, 0, 1, 2}, // Not Taken transitions (state 0->0, 1->0, 2->1, 3->2)
+     {1, 3, 3, 2}} // Taken transitions     (state 0->1, 1->3, 2->3, 3->2)
 };
 
 // Fill in the BTB implementation ...
 class BTBPredictor : public BranchPredictor
 {
 public:
-	BTBPredictor(int btb_lines, int btb_assoc)
-		: BranchPredictor(), table_lines(btb_lines), table_assoc(btb_assoc), numSets(table_lines / table_assoc), sets(numSets, std::vector<BTBEntry>(table_assoc)),
-		  current_time(0), NumCorrectTargetPredictions(0) {}
+    BTBPredictor(int btb_lines, int btb_assoc)
+        : BranchPredictor(), table_lines(btb_lines), table_assoc(btb_assoc), numSets(table_lines / table_assoc), sets(numSets, std::vector<BTBEntry>(table_assoc)),
+          current_time(0), NumCorrectTargetPredictions(0) {}
 
-	~BTBPredictor() {}
+    ~BTBPredictor() {}
 
-	virtual bool predict(ADDRINT ip, ADDRINT target)
-	{
-		int index = ip & (numSets - 1);
-		for (auto &entry : sets[index])
-		{
-			if (entry.valid && entry.ip == ip)
-				return true;
-		}
-		return false;
-	}
+    virtual bool predict(ADDRINT ip, ADDRINT target)
+    {
+        int index = ip & (numSets - 1);
+        for (auto &entry : sets[index])
+        {
+            if (entry.valid && entry.ip == ip)
+                return true;
+        }
+        return false;
+    }
 
-	virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target)
-	{
-		int index = ip & (numSets - 1);
-		bool invalid_found = false;
-		BTBEntry *lru_entry = nullptr;
+    virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target)
+    {
+        int index = ip & (numSets - 1);
+        bool invalid_found = false;
+        BTBEntry *lru_entry = nullptr;
 
-		if (predicted)
-		{
-			for (auto &entry : sets[index])
-			{
-				if (entry.ip == ip)
-				{
-					if (actual)
-					{
-						entry.timestamp = current_time++;
-						if (entry.target != target)
-							entry.target = target;
-						else
-							NumCorrectTargetPredictions++;
-						break;
-					}
+        if (predicted)
+        {
+            for (auto &entry : sets[index])
+            {
+                if (entry.ip == ip)
+                {
+                    if (actual)
+                    {
+                        entry.timestamp = current_time++;
+                        if (entry.target != target)
+                            entry.target = target;
+                        else
+                            NumCorrectTargetPredictions++;
+                        break;
+                    }
 
-					else
-					{
-						entry.valid = false;
-						break;
-					}
-				}
-			}
-		}
+                    else
+                    {
+                        entry.valid = false;
+                        break;
+                    }
+                }
+            }
+        }
 
-		else
-		{
-			if (actual)
-			{
-				// Insert new entry
-				for (auto &entry : sets[index])
-				{
-					if (!entry.valid)
-					{
-						entry.valid = true;
-						entry.ip = ip;
-						entry.target = target;
-						entry.timestamp = current_time++;
-						invalid_found = true;
-						break;
-					}
+        else
+        {
+            if (actual)
+            {
+                // Insert new entry
+                for (auto &entry : sets[index])
+                {
+                    if (!entry.valid)
+                    {
+                        entry.valid = true;
+                        entry.ip = ip;
+                        entry.target = target;
+                        entry.timestamp = current_time++;
+                        invalid_found = true;
+                        break;
+                    }
 
-					if (!lru_entry || entry.timestamp < lru_entry->timestamp)
-						lru_entry = &entry;
-				}
+                    if (!lru_entry || entry.timestamp < lru_entry->timestamp)
+                        lru_entry = &entry;
+                }
 
-				if (!invalid_found)
-				{
-					lru_entry->valid = true;
-					lru_entry->ip = ip;
-					lru_entry->target = target;
-					lru_entry->timestamp = current_time++;
-				}
-			}
-		}
+                if (!invalid_found)
+                {
+                    lru_entry->valid = true;
+                    lru_entry->ip = ip;
+                    lru_entry->target = target;
+                    lru_entry->timestamp = current_time++;
+                }
+            }
+        }
 
-		updateCounters(predicted, actual);
-	}
+        updateCounters(predicted, actual);
+    }
 
-	virtual string getName()
-	{
-		std::ostringstream stream;
-		stream << "BTB-" << table_lines << "-" << table_assoc;
-		return stream.str();
-	}
+    virtual string getName()
+    {
+        std::ostringstream stream;
+        stream << "BTB-" << table_lines << "-" << table_assoc;
+        return stream.str();
+    }
 
-	UINT64 getNumCorrectTargetPredictions()
-	{
-		return NumCorrectTargetPredictions;
-	}
+    UINT64 getNumCorrectTargetPredictions()
+    {
+        return NumCorrectTargetPredictions;
+    }
 
 private:
-	int table_lines, table_assoc, numSets;
-	struct BTBEntry
-	{
-		bool valid = false;
-		ADDRINT ip = 0;
-		ADDRINT target = 0;
-		uint64_t timestamp = 0;
-	};
-	std::vector<std::vector<BTBEntry>> sets;
-	uint64_t current_time;
-	UINT64 NumCorrectTargetPredictions;
+    int table_lines, table_assoc, numSets;
+    struct BTBEntry
+    {
+        bool valid = false;
+        ADDRINT ip = 0;
+        ADDRINT target = 0;
+        uint64_t timestamp = 0;
+    };
+    std::vector<std::vector<BTBEntry>> sets;
+    uint64_t current_time;
+    UINT64 NumCorrectTargetPredictions;
 };
-
 
 #endif
