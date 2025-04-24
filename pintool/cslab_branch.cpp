@@ -205,9 +205,20 @@ VOID InitPredictors()
     */
     /* Question 5.4 */
 
+    btb_predictors.push_back(new BTBPredictor(512, 1)); // 512 lines, 1-way
+    btb_predictors.push_back(new BTBPredictor(512, 2)); // 512 lines, 2-way
+    btb_predictors.push_back(new BTBPredictor(256, 2)); // 256 lines, 2-way
+    btb_predictors.push_back(new BTBPredictor(256, 4)); // 256 lines, 4-way
+    btb_predictors.push_back(new BTBPredictor(128, 2)); // 128 lines, 2-way
+    btb_predictors.push_back(new BTBPredictor(128, 4)); // 128 lines, 4-way
+    btb_predictors.push_back(new BTBPredictor(64, 4)); // 64 lines, 4-way
+    btb_predictors.push_back(new BTBPredictor(64, 8)); // 64 lines, 8-way
+
+
+
     /* Question 5.5 */
 
-    /* Question 5.6 */
+    /* Question 5.6 
     // 1. Static Always Taken Predictor
     branch_predictors.push_back(new StaticAlwaysTakenPredictor());
     
@@ -238,7 +249,7 @@ VOID InitPredictors()
     branch_predictors.push_back(new Alpha21264Predictor());
     
     // 13-16. Tournament Hybrid Predictors
-
+    */
 }
 
 VOID InitRas()

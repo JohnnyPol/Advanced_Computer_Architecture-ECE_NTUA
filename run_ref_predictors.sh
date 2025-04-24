@@ -46,9 +46,10 @@ for folder in "$inputBase"/*; do
             echo "PIN_CMD: $pin_cmd"
 
             # Execute the command while measuring time; timing output goes to a log file.
-            #{ taskset -c 0-7 nice -n -10 /bin/bash -c "$pin_cmd"; }
-            { /bin/bash -c "$pin_cmd" ; }
+            { taskset -c 0-7 nice -n -10 /bin/bash -c "$pin_cmd"; }
+            # { /bin/bash -c "$pin_cmd" ; }
 	    # You can also measure execution time if you run it like this: 
+            # { taskset -c 0 7 nice -n -10 time /bin/bash -c "$pin_cmd" ; } &> "$outDir/${BENCH}_timing.log"
             # { time /bin/bash -c "$pin_cmd" ; } &> "$outDir/${BENCH}_timing.log"
         ) &
     fi

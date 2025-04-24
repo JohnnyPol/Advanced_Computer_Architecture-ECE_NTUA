@@ -56,7 +56,7 @@ public:
     // Μέθοδος πρόβλεψης
     bool predict(ADDRINT ip, ADDRINT target) override
     {
-        // 1. Υπολόγισε τον δείκτη PHT συνδυάζοντας PC (ip) και BHR (Gshare)
+        // 1. Υπολόγισε τον δείκτη PHT συνδυάζοντας PC (ip) και BHR 
         //    Χρησιμοποιούμε τα k = log2(Z) χαμηλότερα bits του ip XOR BHR
         //    Η μάσκα (Z-1) διασφαλίζει ότι ο δείκτης είναι στα όρια 0 έως Z-1.
         unsigned int pht_index = (ip ^ BHR) & pht_index_mask;

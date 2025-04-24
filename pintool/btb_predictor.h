@@ -1,5 +1,5 @@
-#ifndef BRANCH_PREDICTOR_H
-#define BRANCH_PREDICTOR_H
+#ifndef BTB_PREDICTOR_H
+#define BTB_PREDICTOR_H
 
 #include <sstream> // std::ostringstream
 #include <cmath>   // pow(), floor
@@ -15,58 +15,66 @@ using namespace std;
 class BranchPredictor
 {
 public:
-    BranchPredictor() : correct_predictions(0), incorrect_predictions(0) {};
-    ~BranchPredictor() {};
+	BranchPredictor() : correct_predictions(0), incorrect_predictions(0) {};
+	~BranchPredictor() {};
 
-    virtual bool predict(ADDRINT ip, ADDRINT target) = 0;
-    virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) = 0;
-    virtual string getName() = 0;
+	virtual bool predict(ADDRINT ip, ADDRINT target) = 0;
+	virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) = 0;
+	virtual string getName() = 0;
 
-    UINT64 getNumCorrectPredictions() { return correct_predictions; }
-    UINT64 getNumIncorrectPredictions() { return incorrect_predictions; }
+	UINT64 getNumCorrectPredictions() { return correct_predictions; }
+	UINT64 getNumIncorrectPredictions() { return incorrect_predictions; }
 
-   void resetCounters() { correct_predictions = incorrect_predictions = 0; };
+	void resetCounters() { correct_predictions = incorrect_predictions = 0; };
 
 protected:
-    void updateCounters(bool predicted, bool actual) {
-        if (predicted == actual)
-            correct_predictions++;
-        else
-            incorrect_predictions++;
-    };
+	void updateCounters(bool predicted, bool actual)
+	{
+		if (predicted == actual)
+			correct_predictions++;
+		else
+			incorrect_predictions++;
+	};
 
 private:
-    UINT64 correct_predictions;
-    UINT64 incorrect_predictions;
+	UINT64 correct_predictions;
+	UINT64 incorrect_predictions;
 };
 
 class BTBPredictor : public BranchPredictor
 {
 public:
 	BTBPredictor(int btb_lines, int btb_assoc)
-	     : BranchPredictor(), table_lines(btb_lines), table_assoc(btb_assoc), numSets(table_lines / table_assoc), sets(numSets, std::vector<BTBEntry>(table_assoc)), 
-	       current_time(0), NumCorrectTargetPredictions(0) {}
+		: BranchPredictor(), table_lines(btb_lines), table_assoc(btb_assoc), numSets(table_lines / table_assoc), sets(numSets, std::vector<BTBEntry>(table_assoc)),
+		  current_time(0), NumCorrectTargetPredictions(0) {}
 
 	~BTBPredictor() {}
 
-    virtual bool predict(ADDRINT ip, ADDRINT target) {
-       	        int index = ip & (numSets - 1);
-		for (auto& entry : sets[index]) {
+	virtual bool predict(ADDRINT ip, ADDRINT target)
+	{
+		int index = ip & (numSets - 1);
+		for (auto &entry : sets[index])
+		{
 			if (entry.valid && entry.ip == ip)
 				return true;
 		}
 		return false;
 	}
 
-    virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) {
-	    	int index = ip & (numSets - 1);
+	virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target)
+	{
+		int index = ip & (numSets - 1);
 		bool invalid_found = false;
-		BTBEntry* lru_entry = nullptr;
-		
-		if (predicted) {
-			for (auto& entry : sets[index]) {
-				if (entry.ip == ip) {
-					if (actual) {
+		BTBEntry *lru_entry = nullptr;
+
+		if (predicted)
+		{
+			for (auto &entry : sets[index])
+			{
+				if (entry.ip == ip)
+				{
+					if (actual)
+					{
 						entry.timestamp = current_time++;
 						if (entry.target != target)
 							entry.target = target;
@@ -75,7 +83,8 @@ public:
 						break;
 					}
 
-					else {
+					else
+					{
 						entry.valid = false;
 						break;
 					}
@@ -83,11 +92,15 @@ public:
 			}
 		}
 
-		else {
-			if (actual) {
+		else
+		{
+			if (actual)
+			{
 				// Insert new entry
-				for (auto& entry : sets[index]) {
-					if (!entry.valid) {
+				for (auto &entry : sets[index])
+				{
+					if (!entry.valid)
+					{
 						entry.valid = true;
 						entry.ip = ip;
 						entry.target = target;
@@ -100,7 +113,8 @@ public:
 						lru_entry = &entry;
 				}
 
-				if (!invalid_found) {
+				if (!invalid_found)
+				{
 					lru_entry->valid = true;
 					lru_entry->ip = ip;
 					lru_entry->target = target;
@@ -109,22 +123,25 @@ public:
 			}
 		}
 
-	        updateCounters(predicted, actual);
-    }
+		updateCounters(predicted, actual);
+	}
 
-    virtual string getName() { 
-        std::ostringstream stream;
+	virtual string getName()
+	{
+		std::ostringstream stream;
 		stream << "BTB-" << table_lines << "-" << table_assoc;
 		return stream.str();
 	}
 
-    UINT64 getNumCorrectTargetPredictions() { 
+	UINT64 getNumCorrectTargetPredictions()
+	{
 		return NumCorrectTargetPredictions;
 	}
 
 private:
 	int table_lines, table_assoc, numSets;
-	struct BTBEntry {
+	struct BTBEntry
+	{
 		bool valid = false;
 		ADDRINT ip = 0;
 		ADDRINT target = 0;
