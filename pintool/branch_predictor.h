@@ -454,12 +454,12 @@ private:
 
 public:
     // Constructor
-    LocalHistoryPredictor(unsigned int bht_entries_X, unsigned int history_length_Z) : BranchPredictor(),
+    LocalHistoryPredictor(unsigned int bht_entries_X, unsigned int history_length_Z, unsigned int pht_entries, unsigned int pht_counter_bits) : BranchPredictor(),
                                                                                        bht_entries(bht_entries_X),
                                                                                        history_length(history_length_Z),
-                                                                                       pht_entries(8192),
-                                                                                       pht_counter_bits(2),
-                                                                                       pht_index_mask(8192 - 1),
+                                                                                       pht_entries(pht_entries),
+                                                                                       pht_counter_bits(pht_counter_bits),
+                                                                                       pht_index_mask(pht_entries - 1),
                                                                                        history_mask((1 << history_length_Z) - 1), // Υπολογισμός μάσκας
                                                                                        bht_length(static_cast<unsigned int>(std::round(std::log2(bht_entries_X))))
     {
@@ -601,7 +601,7 @@ private:
 class Alpha21264Predictor : public TournamentHybridPredictor
 {
 public:
-    Alpha21264Predictor() : TournamentHybridPredictor(12, new LocalHistoryPredictor(1024, 10), new GlobalHistoryPredictor(4096, 2, 12)) {}
+    Alpha21264Predictor() : TournamentHybridPredictor(12, new LocalHistoryPredictor(1024, 3, 1024, 10), new GlobalHistoryPredictor(4096, 2, 4)) {}
     ~Alpha21264Predictor() {}
 
     virtual string getName()
