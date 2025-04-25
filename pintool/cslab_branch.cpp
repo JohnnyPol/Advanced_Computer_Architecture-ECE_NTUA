@@ -203,7 +203,7 @@ VOID InitPredictors()
         branch_predictors.push_back(new FSMPredictor(r));
     }
     */
-    /* Question 5.4 */
+    /* Question 5.4
 
     btb_predictors.push_back(new BTBPredictor(512, 1)); // 512 lines, 1-way
     btb_predictors.push_back(new BTBPredictor(512, 2)); // 512 lines, 2-way
@@ -214,14 +214,14 @@ VOID InitPredictors()
     btb_predictors.push_back(new BTBPredictor(64, 4)); // 64 lines, 4-way
     btb_predictors.push_back(new BTBPredictor(64, 8)); // 64 lines, 8-way
 
-
+    */
 
     /* Question 5.5 */
 
-    /* Question 5.6 
+    /* Question 5.6 */
     // 1. Static Always Taken Predictor
     branch_predictors.push_back(new StaticAlwaysTakenPredictor());
-    
+
     // 2. Static BTFNT (BackwardTaken-ForwardNotTaken) Predictor
     branch_predictors.push_back(new StaticBTFNTPredictor());
 
@@ -229,12 +229,12 @@ VOID InitPredictors()
     branch_predictors.push_back(new FSMPredictor(3)); // Row 3
 
     // 4. Pentium M Predictor
-    branch_predictors.push_back(new PentiumMBranchPredictor()); 
+    branch_predictors.push_back(new PentiumMBranchPredictor());
 
     // 5-7. Local History Predictors (32K budget)
-    branch_predictors.push_back(new LocalHistoryPredictor(2048, 8)); // X=2048, Z=8
-    branch_predictors.push_back(new LocalHistoryPredictor(4096, 4)); // X=4096, Z=4
-    branch_predictors.push_back(new LocalHistoryPredictor(8192, 2)); // X=8192, Z=2
+    branch_predictors.push_back(new LocalHistoryPredictor(2048, 8, 8192, 2)); // X=2048, Z=8
+    branch_predictors.push_back(new LocalHistoryPredictor(4096, 4, 8192, 2)); // X=4096, Z=4
+    branch_predictors.push_back(new LocalHistoryPredictor(8192, 2, 8192, 2)); // X=8192, Z=2
 
     // 8-11. Global History Predictors (32K budget)
     // X=2 => Z=16384
@@ -247,14 +247,49 @@ VOID InitPredictors()
 
     // 12. Alpha 21264 Predictor
     branch_predictors.push_back(new Alpha21264Predictor());
-    
+
     // 13-16. Tournament Hybrid Predictors
-    */
+
+    branch_predictors.push_back(
+        new TournamentHybridPredictor(
+            10,
+            new NbitPredictor(13, 2),
+            new GlobalHistoryPredictor(8192, 2, 2)));
+
+    branch_predictors.push_back(
+        new TournamentHybridPredictor(
+            10,
+            new GlobalHistoryPredictor(8192, 2, 2),
+            new LocalHistoryPredictor(8192, 2, 8192, 2)));
+
+    branch_predictors.push_back(
+        new TournamentHybridPredictor(
+            10,
+            new NbitPredictor(13, 2),
+            new LocalHistoryPredictor(8192, 2, 8192, 2)));
+
+    branch_predictors.push_back(
+        new TournamentHybridPredictor(
+            11,
+            new NbitPredictor(13, 2),
+            new GlobalHistoryPredictor(8192, 2, 2)));
+
+    // branch_predictors.push_back(
+    //     new TournamentHybridPredictor(
+    //         11,
+    //         new GlobalHistoryPredictor(8192, 2, 2),
+    //         new LocalHistoryPredictor(8192, 2, 8192, 2)));
+
+    // branch_predictors.push_back(
+    //     new TournamentHybridPredictor(
+    //         11,
+    //         new NbitPredictor(13, 2),
+    //         new LocalHistoryPredictor(8192, 2, 8192, 2)));
 }
 
 VOID InitRas()
 {
-    /* Question 5.5 
+    /* Question 5.5
     ras_vec.push_back(new RAS(4));
     ras_vec.push_back(new RAS(8));
     ras_vec.push_back(new RAS(16));
@@ -276,7 +311,7 @@ int main(int argc, char *argv[])
 
     // Initialize predictors and RAS vector
     InitPredictors();
-    //InitRas();
+    // InitRas();
 
     // Instrument function calls in order to catch __parsec_roi_{begin,end}
     INS_AddInstrumentFunction(Instruction, 0);
