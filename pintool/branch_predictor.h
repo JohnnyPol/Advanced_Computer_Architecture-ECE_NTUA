@@ -15,7 +15,7 @@ class BranchPredictor
 {
 public:
     BranchPredictor() : correct_predictions(0), incorrect_predictions(0) {};
-    ~BranchPredictor() {};
+    virtual ~BranchPredictor() = default;
 
     virtual bool predict(ADDRINT ip, ADDRINT target) = 0;
     virtual void update(bool predicted, bool actual, ADDRINT ip, ADDRINT target) = 0;
@@ -350,11 +350,10 @@ private:
     uint8_t BHR; // Branch History Register (κρατάει N bits ιστορικού)
 
     // Μάσκες και όρια
-    const uint8_t counter_max;          // Μέγιστη τιμή μετρητή (2^X - 1)
-    const uint8_t bhr_mask;             // Μάσκα για τον BHR (2^N - 1)
-    const uint8_t prediction_threshold; // Όριο πρόβλεψης (2^(X-1))
-    const unsigned int pht_index_mask;  // Μάσκα για τον δείκτη PHT (Z-1)
-    const unsigned int pht_index_bits;  // Αριθμός bits για τον δείκτη PHT
+    const uint8_t counter_max;         // Μέγιστη τιμή μετρητή (2^X - 1)
+    const uint8_t bhr_mask;            // Μάσκα για τον BHR (2^N - 1)
+    const unsigned int pht_index_mask; // Μάσκα για τον δείκτη PHT (Z-1)
+    const unsigned int pht_index_bits; // Αριθμός bits για τον δείκτη PHT
 
 public:
     // Constructor
@@ -365,17 +364,14 @@ public:
                                                                                                                    BHR(0), // Αρχικοποίηση BHR σε 0
                                                                                                                    counter_max((1 << counter_length_X) - 1),
                                                                                                                    bhr_mask((1 << bhr_length_N) - 1),
-                                                                                                                   prediction_threshold(1 << (counter_length_X - 1)),
                                                                                                                    pht_index_mask(pht_entries_Z - 1),
                                                                                                                    pht_index_bits(static_cast<unsigned int>(std::round(std::log2(pht_entries_Z))))
     {
         // Αρχικοποίηση PHT (μέγεθος Z)
-        // Αρχική κατάσταση: Weakly Not Taken (η κατάσταση ακριβώς κάτω από το όριο πρόβλεψης)
-        uint8_t initial_pht_state = (prediction_threshold > 0) ? prediction_threshold - 1 : 0;
-        PHT.assign(pht_entries, initial_pht_state);
+        PHT.assign(pht_entries, 1); // Αρχική κατάσταση: Weakly Not Taken (1)
     }
 
-    ~GlobalHistoryPredictor() override = default;
+    ~GlobalHistoryPredictor() {};
 
     // Μέθοδος πρόβλεψης
     bool predict(ADDRINT ip, ADDRINT target) override
@@ -444,18 +440,17 @@ private:
     const unsigned int history_length;   // Μήκος ιστορικού ανά εγγραφή BHT (Z)
     const unsigned int pht_entries;      // Αριθμός εγγραφών PHT (σταθερό 8192)
     const unsigned int pht_counter_bits; // Bits ανά μετρητή PHT (σταθερό 2)
-    const unsigned int bht_length;       // Μήκος BHT (log2(X))
     const unsigned int pht_index_mask;   // Μάσκα για τον δείκτη PHT (8192 - 1)
 
+    // Μάσκα για το ιστορικό (για να κρατάμε μόνο Z bits)
+    const uint8_t history_mask;
     // Πίνακες
     std::vector<uint8_t> BHT; // Branch History Table (κρατάει Z bits ιστορικού)
     std::vector<uint8_t> PHT; // Pattern History Table (κρατάει 2-bit μετρητές)
 
-    // Μάσκα για το ιστορικό (για να κρατάμε μόνο Z bits)
-    const uint8_t history_mask;
-
     // Όριο για τον 2-bit μετρητή
     const uint8_t counter_max = 3; // (1 << pht_counter_bits) - 1;
+    const unsigned int bht_length; // Μήκος BHT (log2(X))
 
 public:
     // Constructor
@@ -466,7 +461,7 @@ public:
                                                                                        pht_counter_bits(2),
                                                                                        pht_index_mask(8192 - 1),
                                                                                        history_mask((1 << history_length_Z) - 1), // Υπολογισμός μάσκας
-                                                                                       bht_length(static_cast<unsigned int>(std::round(std::log2(bht_entries_X)))),
+                                                                                       bht_length(static_cast<unsigned int>(std::round(std::log2(bht_entries_X))))
     {
         // Αρχικοποίηση BHT με μηδενικά (μέγεθος Χ)
         BHT.assign(bht_entries, 0);
@@ -476,18 +471,18 @@ public:
         PHT.assign(pht_entries, 1);
     }
 
-    ~LocalHistoryPredictor() override = default;
+    ~LocalHistoryPredictor() {};
 
     bool predict(ADDRINT ip, ADDRINT target) override
     {
         unsigned int bht_index = ip % bht_entries;
         uint8_t local_history = BHT[bht_index];
 
-        // Ολίσθηση του PC component για να κάνει χώρο για τα BHR bits
+        // Ολίσθηση του PC component για να κάνει χώρο για τα local history bits
         unsigned int shifted_pc_component = ip << bht_length;
 
-        // Υπολογισμός του δείκτη PHT χρησιμοποιώντας το BHR
-        unsigned int pht_index = (shifted_pc_component | BHR) & pht_index_mask;
+        // Υπολογισμός του δείκτη PHT χρησιμοποιώντας το local history
+        unsigned int pht_index = (shifted_pc_component | local_history) & pht_index_mask;
 
         // Διάβασε τον 2-bit μετρητή από τον PHT
         uint8_t counter_state = PHT[pht_index];
@@ -506,11 +501,11 @@ public:
         // Διάβασε το τοπικό ιστορικό (που χρησιμοποιήθηκε για την πρόβλεψη)
         uint8_t local_history = BHT[bht_index];
 
-        // Ολίσθηση του PC component για να κάνει χώρο για τα BHR bits
+        // Ολίσθηση του PC component για να κάνει χώρο για τα local history bits
         unsigned int shifted_pc_component = ip << bht_length;
 
-        // Υπολογισμός του δείκτη PHT χρησιμοποιώντας το BHR
-        unsigned int pht_index = (shifted_pc_component | BHR) & pht_index_mask;
+        // Υπολογισμός του δείκτη PHT χρησιμοποιώντας το local history
+        unsigned int pht_index = (shifted_pc_component | local_history) & pht_index_mask;
 
         // Ενημέρωσε τον 2-bit μετρητή στον PHT
         uint8_t old_counter_state = PHT[pht_index];
@@ -539,19 +534,6 @@ public:
         stream << "Local-" << bht_entries << "ent-" << history_length << "hist";
         return stream.str();
     }
-};
-
-class Alpha21264Predictor : public TournamentHybridPredictor 
-{
-public:
-	Alpha21264Predictor() : TournamentHybridPredictor(12, new LocalHistoryPredictor(/* ? */), new GlobalHistoryPredictor(/* ? */)) {}
-	~Alpha21264Predictor() {}
-
-	virtual string getName() {
-		std::ostringstream stream;
-		stream << "Alpha21264";
-		return stream.str();
-	}
 };
 
 class TournamentHybridPredictor : public BranchPredictor
@@ -614,6 +596,20 @@ private:
     unsigned int table_entries;
     unsigned long long *TABLE;
     unsigned int COUNTER_MAX;
+};
+
+class Alpha21264Predictor : public TournamentHybridPredictor
+{
+public:
+    Alpha21264Predictor() : TournamentHybridPredictor(12, new LocalHistoryPredictor(1024, 10), new GlobalHistoryPredictor(4096, 2, 12)) {}
+    ~Alpha21264Predictor() {}
+
+    virtual string getName()
+    {
+        std::ostringstream stream;
+        stream << "Alpha21264";
+        return stream.str();
+    }
 };
 
 #endif
