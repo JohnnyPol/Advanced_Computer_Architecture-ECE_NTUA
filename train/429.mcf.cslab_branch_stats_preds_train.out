@@ -1,0 +1,21 @@
+Total Instructions: 18199703438
+
+RAS: (Correct - Incorrect)
+
+Branch Predictors: (Name - Correct - Incorrect)
+  Static-AlwaysTaken: 1332802194 2377831938
+  BTFNT: 2644368722 1066265410
+  Nbit-8K-4-FSM-1: 3475321952 235312180
+  Pentium-M: 2714772924 995861208
+  Local-2048ent-8hist: 2748374958 962259174
+  Local-4096ent-4hist: 2648430933 1062203199
+  Local-8192ent-2hist: 2453063456 1257570676
+  Global-N2-X2-16KPHT: 3512003833 198630299
+  Global-N4-X2-16KPHT: 3519920378 190713754
+  Alpha21264: 3517803439 192830693
+  Tournament-Nbit-8K-2-FSM-1-Global-N2-X2-8KPHT: 3511122578 199511554
+  Tournament-Global-N2-X2-8KPHT-Local-8192ent-2hist: 3497249410 213384722
+  Tournament-Nbit-8K-2-FSM-1-Local-8192ent-2hist: 3447821203 262812929
+  Tournament-Nbit-8K-2-FSM-1-Global-N2-X2-8KPHT: 3511122576 199511556
+
+BTB Predictors: (Name - Correct - Incorrect - TargetCorrect)
