@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ## For nbit predictors
-predictors_to_plot = [ "  Nbit" , "  FSM" , "RAS ", "  BTB-"]
+predictors_to_plot = [ "  Nbit" , "  Static-AlwaysTaken", "  BTFNT", "  Pentium", "  Local", "  Global", " Alpha21264", "  T-", "  SAT"]
 
 x_Axis = []
 mpki_Axis = []
@@ -22,8 +22,8 @@ while line:
 		for pred_prefix in predictors_to_plot:
 			if line.startswith(pred_prefix):
 				predictor_string = line.split(':')[0]
-				correct_predictions = int(np.long(tokens[-3]))				
-				incorrect_predictions = int(np.long(tokens[-2]))
+				correct_predictions = int(np.long(tokens[-2]))				
+				incorrect_predictions = int(np.long(tokens[-1]))
 				x_Axis.append(predictor_string)
 				mpki_Axis.append(incorrect_predictions / (total_ins / 1000.0))
 
