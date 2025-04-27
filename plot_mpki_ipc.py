@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ## For nbit predictors
-predictors_to_plot = [ "  Nbit" , "  Static-AlwaysTaken", "  BTFNT", "  Pentium", "  Local", "  Global", " Alpha21264", "  Tournament", "  SAT", "  T-"]
+predictors_to_plot = [ "  Nbit" , "  Static-AlwaysTaken", "  BTFNT", "  Pentium", "  Local", "  Global", "  Alpha21264", "  Tournament", "  SAT", "  T-"]
 
 x_Axis = []
 mpki_Axis = []
